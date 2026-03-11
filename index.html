@@ -1,0 +1,917 @@
+<!doctype html>
+<html lang="id" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jelajah Nusantara</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&amp;display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Nunito', sans-serif; }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+    
+    @keyframes wave {
+      0%, 100% { transform: translateX(0) rotate(0deg); }
+      25% { transform: translateX(2px) rotate(2deg); }
+      75% { transform: translateX(-2px) rotate(-2deg); }
+    }
+    
+    @keyframes bounce-dice {
+      0% { transform: rotateX(0deg) rotateY(0deg) scale(1); }
+      25% { transform: rotateX(180deg) rotateY(90deg) scale(1.1); }
+      50% { transform: rotateX(360deg) rotateY(180deg) scale(1); }
+      75% { transform: rotateX(540deg) rotateY(270deg) scale(1.1); }
+      100% { transform: rotateX(720deg) rotateY(360deg) scale(1); }
+    }
+    
+    @keyframes walk {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+    
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 10px rgba(255,255,255,0.3); }
+      50% { box-shadow: 0 0 25px rgba(255,255,255,0.6); }
+    }
+    
+    @keyframes sparkle {
+      0%, 100% { opacity: 0; transform: scale(0); }
+      50% { opacity: 1; transform: scale(1); }
+    }
+    
+    @keyframes card-flip {
+      0% { transform: perspective(400px) rotateY(0deg); }
+      50% { transform: perspective(400px) rotateY(90deg); }
+      100% { transform: perspective(400px) rotateY(0deg); }
+    }
+    
+    .float-animation { animation: float 3s ease-in-out infinite; }
+    .wave-animation { animation: wave 2s ease-in-out infinite; }
+    .dice-rolling { animation: bounce-dice 0.8s ease-out; }
+    .walking { animation: walk 0.3s ease-in-out; }
+    .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+    .card-flip { animation: card-flip 0.6s ease-out; }
+    
+    .board-tile {
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .board-tile:hover {
+      transform: scale(1.05);
+      z-index: 10;
+    }
+    
+    .maritime-tile {
+      background: linear-gradient(135deg, #0891b2 0%, #06b6d4 50%, #22d3ee 100%);
+    }
+    
+    .agrarian-tile {
+      background: linear-gradient(135deg, #15803d 0%, #22c55e 50%, #4ade80 100%);
+    }
+    
+    .question-tile {
+      background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #c084fc 100%);
+    }
+    
+    .challenge-tile {
+      background: linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #f87171 100%);
+    }
+    
+    .chance-tile {
+      background: linear-gradient(135deg, #ea580c 0%, #f97316 50%, #fb923c 100%);
+    }
+    
+    .start-tile {
+      background: linear-gradient(135deg, #ca8a04 0%, #eab308 50%, #facc15 100%);
+    }
+    
+    .dice-3d {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(145deg, #ffffff 0%, #f0f0f0 100%);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      font-weight: 900;
+      color: #1e293b;
+      box-shadow: 
+        0 8px 24px rgba(0,0,0,0.2),
+        inset 0 2px 4px rgba(255,255,255,0.8),
+        inset 0 -2px 4px rgba(0,0,0,0.1);
+      transform-style: preserve-3d;
+    }
+    
+    .character-token {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      border: 3px solid white;
+      transition: all 0.3s ease;
+    }
+    
+    .modal-overlay {
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+    }
+    
+    .ocean-bg {
+      background: 
+        radial-gradient(ellipse at 20% 80%, rgba(6, 182, 212, 0.3) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(34, 197, 94, 0.3) 0%, transparent 50%),
+        linear-gradient(180deg, #0c4a6e 0%, #164e63 50%, #134e4a 100%);
+    }
+    
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="h-full">
+  <div id="app" class="h-full ocean-bg overflow-auto scrollbar-hide"><!-- Header -->
+   <header class="text-center py-4 px-4">
+    <h1 id="game-title" class="text-2xl md:text-4xl font-black text-white drop-shadow-lg float-animation">🌊 Jelajah Nusantara 🌾</h1>
+    <p class="text-cyan-200 text-sm md:text-base mt-1">Petualangan di Negara Maritim dan Agraris</p>
+   </header><!-- Player Status Bar -->
+   <div class="px-4 mb-4">
+    <div class="bg-white/10 backdrop-blur rounded-2xl p-3 flex flex-wrap gap-2 justify-center">
+     <div id="players-status" class="flex flex-wrap gap-3 justify-center"></div>
+    </div>
+   </div><!-- Main Game Area -->
+   <div class="px-4 pb-4">
+    <div class="flex flex-col lg:flex-row gap-4"><!-- Game Board -->
+     <div class="flex-1 min-w-0">
+      <div class="bg-gradient-to-br from-cyan-900/50 to-green-900/50 backdrop-blur rounded-3xl p-4 border-4 border-yellow-400/50">
+       <div id="game-board" class="grid gap-1" style="grid-template-columns: repeat(7, 1fr); grid-template-rows: repeat(7, 1fr);"><!-- Board tiles will be generated here -->
+       </div>
+      </div>
+     </div><!-- Control Panel -->
+     <div class="lg:w-72 flex flex-col gap-3"><!-- Dice Section -->
+      <div class="bg-white/10 backdrop-blur rounded-2xl p-4 text-center">
+       <p class="text-white font-bold mb-3">🎲 Lempar Dadu</p><button id="roll-dice-btn" onclick="rollDice()" class="dice-3d mx-auto hover:scale-110 transition-transform cursor-pointer active:scale-95"> ? </button>
+       <p id="dice-instruction" class="text-cyan-200 text-sm mt-3">Klik dadu untuk memulai!</p>
+      </div><!-- Current Player -->
+      <div class="bg-white/10 backdrop-blur rounded-2xl p-4">
+       <p class="text-white font-bold mb-2">👤 Giliran Bermain</p>
+       <div id="current-player-display" class="flex items-center gap-3 bg-white/20 rounded-xl p-3"><!-- Current player info -->
+       </div>
+      </div><!-- Legend -->
+      <div class="bg-white/10 backdrop-blur rounded-2xl p-4">
+       <p class="text-white font-bold mb-3">📍 Keterangan Kotak</p>
+       <div class="space-y-2 text-xs">
+        <div class="flex items-center gap-2">
+         <div class="w-5 h-5 rounded maritime-tile"></div><span class="text-cyan-200">Aset Maritim</span>
+        </div>
+        <div class="flex items-center gap-2">
+         <div class="w-5 h-5 rounded agrarian-tile"></div><span class="text-green-200">Aset Agraris</span>
+        </div>
+        <div class="flex items-center gap-2">
+         <div class="w-5 h-5 rounded question-tile"></div><span class="text-purple-200">Pertanyaan</span>
+        </div>
+        <div class="flex items-center gap-2">
+         <div class="w-5 h-5 rounded challenge-tile"></div><span class="text-red-200">Tantangan</span>
+        </div>
+        <div class="flex items-center gap-2">
+         <div class="w-5 h-5 rounded chance-tile"></div><span class="text-orange-200">Kesempatan</span>
+        </div>
+       </div>
+      </div>
+     </div>
+    </div>
+   </div><!-- Question Modal -->
+   <div id="question-modal" class="fixed inset-0 modal-overlay z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl card-flip">
+     <div id="modal-icon" class="text-5xl text-center mb-4">
+      ❓
+     </div>
+     <h3 id="modal-title" class="text-xl font-black text-center text-gray-800 mb-4">Pertanyaan Nusantara</h3>
+     <p id="modal-question" class="text-gray-700 text-center text-lg mb-6"></p>
+     <div id="modal-options" class="space-y-3"><!-- Options will be generated here -->
+     </div>
+     <div id="modal-result" class="hidden mt-4 p-4 rounded-2xl text-center">
+      <p id="result-text" class="font-bold text-lg"></p>
+      <p id="result-points" class="text-sm mt-1"></p>
+     </div><button id="modal-continue" onclick="closeModal()" class="hidden w-full mt-4 bg-gradient-to-r from-cyan-500 to-green-500 text-white font-bold py-3 px-6 rounded-2xl hover:scale-105 transition-transform"> Lanjutkan ▶️ </button>
+    </div>
+   </div><!-- Winner Modal -->
+   <div id="winner-modal" class="fixed inset-0 modal-overlay z-50 hidden items-center justify-center p-4">
+    <div class="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-3xl max-w-md w-full p-8 shadow-2xl text-center">
+     <div class="text-6xl mb-4">
+      🏆
+     </div>
+     <h2 class="text-3xl font-black text-white mb-2">Selamat!</h2>
+     <p id="winner-name" class="text-xl text-yellow-100 mb-4"></p>
+     <p id="winner-score" class="text-lg text-white/80 mb-6"></p><button onclick="restartGame()" class="bg-white text-orange-500 font-bold py-3 px-8 rounded-2xl hover:scale-105 transition-transform"> Main Lagi 🎮 </button>
+    </div>
+   </div><!-- Start Screen -->
+   <div id="start-screen" class="fixed inset-0 modal-overlay z-40 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl">
+     <div class="text-center mb-6">
+      <div class="text-5xl mb-3">
+       🌏
+      </div>
+      <h2 class="text-2xl font-black text-gray-800">Jelajah Nusantara</h2>
+      <p class="text-gray-500 text-sm mt-2">Petualangan Edukatif di Negeri Maritim dan Agraris</p>
+     </div>
+     <div class="mb-6"><label class="block text-gray-700 font-bold mb-3">Pilih Jumlah Pemain:</label>
+      <div class="flex gap-2 justify-center"><button onclick="setPlayerCount(2)" class="player-count-btn px-5 py-3 rounded-xl font-bold transition-all bg-gray-100 hover:bg-cyan-500 hover:text-white" data-count="2">2</button> <button onclick="setPlayerCount(3)" class="player-count-btn px-5 py-3 rounded-xl font-bold transition-all bg-gray-100 hover:bg-cyan-500 hover:text-white" data-count="3">3</button> <button onclick="setPlayerCount(4)" class="player-count-btn px-5 py-3 rounded-xl font-bold transition-all bg-gray-100 hover:bg-cyan-500 hover:text-white" data-count="4">4</button> <button onclick="setPlayerCount(5)" class="player-count-btn px-5 py-3 rounded-xl font-bold transition-all bg-gray-100 hover:bg-cyan-500 hover:text-white" data-count="5">5</button>
+      </div>
+     </div>
+     <div id="character-selection" class="hidden mb-6"><label class="block text-gray-700 font-bold mb-3">Pilih Karakter:</label>
+      <div id="character-grid" class="grid grid-cols-5 gap-2"><!-- Characters will be generated -->
+      </div>
+     </div><button id="start-game-btn" onclick="startGame()" disabled class="w-full bg-gradient-to-r from-cyan-500 to-green-500 text-white font-bold py-4 rounded-2xl hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"> Mulai Petualangan! 🚀 </button>
+    </div>
+   </div>
+  </div>
+  <script>
+    // Default configuration
+    const defaultConfig = {
+      game_title: "Jelajah Nusantara",
+      start_text: "Dermaga Pusat",
+      background_color: "#0c4a6e",
+      accent_color: "#eab308",
+      text_color: "#ffffff",
+      maritime_color: "#06b6d4",
+      agrarian_color: "#22c55e",
+      font_family: "Nunito"
+    };
+
+    // Game State
+    let gameState = {
+      players: [],
+      currentPlayerIndex: 0,
+      isRolling: false,
+      selectedPlayerCount: 0,
+      selectedCharacters: [],
+      gameStarted: false,
+      winningScore: 200
+    };
+
+    // Characters
+    const characters = [
+      { id: 'arka', name: 'Arka si Pelaut', emoji: '🎣', color: '#0891b2', desc: 'Pelaut pemberani' },
+      { id: 'dara', name: 'Dara si Petani', emoji: '🌾', color: '#15803d', desc: 'Petani rajin' },
+      { id: 'banyu', name: 'Banyu si Penyelam', emoji: '🤿', color: '#0284c7', desc: 'Penyelam handal' },
+      { id: 'gendis', name: 'Gendis si Pekebun', emoji: '🧺', color: '#65a30d', desc: 'Pekebun ceria' },
+      { id: 'raka', name: 'Raka si Peternak', emoji: '🐄', color: '#ca8a04', desc: 'Peternak baik hati' }
+    ];
+
+    // Board Tiles (24 tiles forming a square path)
+    const boardTiles = [
+      { id: 0, type: 'start', name: 'Dermaga Pusat', icon: '⚓', sector: 'start' },
+      { id: 1, type: 'maritime', name: 'Pelabuhan Tanjung Priok', icon: '🚢', sector: 'maritime' },
+      { id: 2, type: 'question', name: 'Pertanyaan', icon: '❓', sector: 'question' },
+      { id: 3, type: 'maritime', name: 'Terumbu Karang Bunaken', icon: '🪸', sector: 'maritime' },
+      { id: 4, type: 'question', name: 'Pertanyaan', icon: '❓', sector: 'question' },
+      { id: 5, type: 'chance', name: 'Kesempatan', icon: '🎁', sector: 'chance' },
+      { id: 6, type: 'maritime', name: 'Ladang Garam Madura', icon: '🧂', sector: 'maritime' },
+      { id: 7, type: 'question', name: 'Pertanyaan', icon: '❓', sector: 'question' },
+      { id: 8, type: 'challenge', name: 'Tantangan', icon: '⚡', sector: 'challenge' },
+      { id: 9, type: 'maritime', name: 'Budidaya Mutiara Lombok', icon: '🦪', sector: 'maritime' },
+      { id: 10, type: 'question', name: 'Pertanyaan', icon: '❓', sector: 'question' },
+      { id: 11, type: 'maritime', name: 'Rumput Laut Sulawesi', icon: '🌿', sector: 'maritime' },
+      { id: 12, type: 'agrarian', name: 'Lumbung Padi Karawang', icon: '🌾', sector: 'agrarian' },
+      { id: 13, type: 'question', name: 'Pertanyaan', icon: '❓', sector: 'question' },
+      { id: 14, type: 'agrarian', name: 'Kebun Teh Jawa Barat', icon: '🍵', sector: 'agrarian' },
+      { id: 15, type: 'question', name: 'Pertanyaan', icon: '❓', sector: 'question' },
+      { id: 16, type: 'chance', name: 'Kesempatan', icon: '🎁', sector: 'chance' },
+      { id: 17, type: 'agrarian', name: 'Hutan Jati Jawa Tengah', icon: '🌳', sector: 'agrarian' },
+      { id: 18, type: 'question', name: 'Pertanyaan', icon: '❓', sector: 'question' },
+      { id: 19, type: 'challenge', name: 'Tantangan', icon: '⚡', sector: 'challenge' },
+      { id: 20, type: 'agrarian', name: 'Peternakan Sumbawa', icon: '🐄', sector: 'agrarian' },
+      { id: 21, type: 'question', name: 'Pertanyaan', icon: '❓', sector: 'question' },
+      { id: 22, type: 'agrarian', name: 'Sawah Terasering Bali', icon: '🏞️', sector: 'agrarian' },
+      { id: 23, type: 'question', name: 'Pertanyaan', icon: '❓', sector: 'question' }
+    ];
+
+    // Questions Bank
+    const questions = [
+      { q: "Apa yang dimaksud dengan negara maritim?", options: ["Negara yang dikelilingi laut", "Negara yang banyak gunung", "Negara yang tidak punya air"], answer: 0 },
+      { q: "Mengapa Indonesia disebut negara maritim?", options: ["Karena wilayahnya sebagian besar laut", "Karena tidak ada sungai", "Karena tidak ada pulau"], answer: 0 },
+      { q: "Sebutkan hasil laut Indonesia!", options: ["Ikan, udang, rumput laut", "Padi, jagung, kedelai", "Batu, pasir, tanah"], answer: 0 },
+      { q: "Apa manfaat laut bagi kehidupan manusia?", options: ["Sumber makanan dan transportasi", "Tempat membuang sampah", "Tidak ada manfaatnya"], answer: 0 },
+      { q: "Pekerjaan yang berkaitan dengan laut adalah...", options: ["Nelayan", "Petani sawah", "Tukang kayu"], answer: 0 },
+      { q: "Mengapa laut harus dijaga kebersihannya?", options: ["Agar ikan tetap hidup sehat", "Agar bisa membuang sampah", "Agar air laut menjadi manis"], answer: 0 },
+      { q: "Apa yang dimaksud dengan negara agraris?", options: ["Negara yang penduduknya banyak bertani", "Negara yang tidak punya tanah", "Negara yang banyak pabrik"], answer: 0 },
+      { q: "Mengapa Indonesia disebut negara agraris?", options: ["Karena tanahnya subur untuk pertanian", "Karena tidak ada petani", "Karena tidak ada sawah"], answer: 0 },
+      { q: "Sebutkan hasil pertanian Indonesia!", options: ["Padi, jagung, sayuran", "Emas, perak, tembaga", "Minyak, gas, batu bara"], answer: 0 },
+      { q: "Mengapa tanah Indonesia subur?", options: ["Karena banyak gunung berapi", "Karena tidak pernah hujan", "Karena tidak ada pohon"], answer: 0 },
+      { q: "Apa manfaat sawah bagi masyarakat?", options: ["Menghasilkan beras untuk dimakan", "Tempat bermain air", "Tempat membuang sampah"], answer: 0 },
+      { q: "Tanaman perkebunan di Indonesia adalah...", options: ["Teh, kopi, kelapa sawit", "Rumput laut, ikan, udang", "Batu, pasir, kerikil"], answer: 0 },
+      { q: "Apa fungsi pupuk bagi tanaman?", options: ["Memberi nutrisi agar tumbuh subur", "Membuat tanaman layu", "Menghilangkan daun"], answer: 0 },
+      { q: "Mengapa air penting bagi pertanian?", options: ["Untuk menyiram tanaman agar tumbuh", "Agar tanaman kering", "Tidak penting sama sekali"], answer: 0 },
+      { q: "Apa yang terjadi jika laut tercemar?", options: ["Ikan dan biota laut mati", "Laut menjadi lebih bersih", "Ikan menjadi lebih banyak"], answer: 0 },
+      { q: "Mengapa kita harus menjaga hutan?", options: ["Agar udara tetap bersih dan sejuk", "Agar bisa ditebang semua", "Agar tidak ada pohon"], answer: 0 },
+      { q: "Bagaimana cara menjaga kelestarian laut?", options: ["Tidak membuang sampah ke laut", "Membuang sampah ke laut", "Menangkap semua ikan"], answer: 0 },
+      { q: "Mengapa sawah penting bagi ketahanan pangan?", options: ["Menghasilkan beras makanan pokok", "Tidak menghasilkan apa-apa", "Hanya untuk bermain"], answer: 0 },
+      { q: "Bagaimana cara membantu petani Indonesia?", options: ["Membeli hasil tani lokal", "Tidak membeli hasil tani", "Membuang hasil tani"], answer: 0 },
+      { q: "Mengapa hasil laut penting bagi ekonomi negara?", options: ["Bisa dijual dan diekspor", "Tidak bisa dijual", "Hanya untuk dibuang"], answer: 0 }
+    ];
+
+    // Challenge Cards
+    const challenges = [
+      { text: "Gelombang besar! Mundur 2 langkah.", effect: 'move', value: -2, icon: '🌊' },
+      { text: "Perahu nelayan rusak! Lewati 1 giliran.", effect: 'skip', value: 1, icon: '🚤' },
+      { text: "Hama menyerang tanaman! Kurangi 10 poin.", effect: 'points', value: -10, icon: '🐛' },
+      { text: "Musim kemarau! Mundur 1 langkah.", effect: 'move', value: -1, icon: '☀️' },
+      { text: "Badai menerjang! Kurangi 15 poin.", effect: 'points', value: -15, icon: '⛈️' }
+    ];
+
+    // Chance Cards
+    const chances = [
+      { text: "Panen melimpah! +20 poin.", effect: 'points', value: 20, icon: '🌾' },
+      { text: "Menemukan mutiara! +25 poin.", effect: 'points', value: 25, icon: '💎' },
+      { text: "Festival laut! +15 poin.", effect: 'points', value: 15, icon: '🎉' },
+      { text: "Membantu petani! +10 poin.", effect: 'points', value: 10, icon: '🤝' },
+      { text: "Tangkapan ikan melimpah! +20 poin.", effect: 'points', value: 20, icon: '🐟' },
+      { text: "Maju 2 langkah!", effect: 'move', value: 2, icon: '🏃' }
+    ];
+
+    // Position mapping for 7x7 grid (path around the board)
+    const positionMap = [
+      { row: 6, col: 0 }, // 0: Start
+      { row: 6, col: 1 }, // 1
+      { row: 6, col: 2 }, // 2
+      { row: 6, col: 3 }, // 3
+      { row: 6, col: 4 }, // 4
+      { row: 6, col: 5 }, // 5
+      { row: 6, col: 6 }, // 6
+      { row: 5, col: 6 }, // 7
+      { row: 4, col: 6 }, // 8
+      { row: 3, col: 6 }, // 9
+      { row: 2, col: 6 }, // 10
+      { row: 1, col: 6 }, // 11
+      { row: 0, col: 6 }, // 12
+      { row: 0, col: 5 }, // 13
+      { row: 0, col: 4 }, // 14
+      { row: 0, col: 3 }, // 15
+      { row: 0, col: 2 }, // 16
+      { row: 0, col: 1 }, // 17
+      { row: 0, col: 0 }, // 18
+      { row: 1, col: 0 }, // 19
+      { row: 2, col: 0 }, // 20
+      { row: 3, col: 0 }, // 21
+      { row: 4, col: 0 }, // 22
+      { row: 5, col: 0 }  // 23
+    ];
+
+    // Initialize board
+    function initBoard() {
+      const board = document.getElementById('game-board');
+      board.innerHTML = '';
+      
+      // Create 7x7 grid
+      for (let row = 0; row < 7; row++) {
+        for (let col = 0; col < 7; col++) {
+          const cell = document.createElement('div');
+          cell.className = 'aspect-square rounded-lg flex flex-col items-center justify-center p-1 relative';
+          cell.dataset.row = row;
+          cell.dataset.col = col;
+          
+          // Find if this position has a tile
+          const tileIndex = positionMap.findIndex(p => p.row === row && p.col === col);
+          
+          if (tileIndex !== -1) {
+            const tile = boardTiles[tileIndex];
+            cell.id = `tile-${tileIndex}`;
+            cell.className += ` board-tile ${tile.type}-tile`;
+            
+            cell.innerHTML = `
+              <span class="text-lg md:text-2xl">${tile.icon}</span>
+              <span class="text-white text-[6px] md:text-[8px] font-bold text-center leading-tight mt-1 drop-shadow">${tile.name}</span>
+              <div id="tokens-${tileIndex}" class="absolute -bottom-1 flex gap-0.5 flex-wrap justify-center"></div>
+            `;
+          } else {
+            // Center area - decorative
+            cell.className += ' bg-gradient-to-br from-cyan-800/30 to-green-800/30 border border-white/10';
+            
+            if (row === 3 && col === 3) {
+              cell.innerHTML = `
+                <div class="text-center">
+                  <span class="text-3xl">🌏</span>
+                  <p class="text-white/60 text-[6px] font-bold mt-1">NUSANTARA</p>
+                </div>
+              `;
+            } else if ((row + col) % 3 === 0) {
+              const decorIcons = ['🐠', '🌺', '🦋', '🌴', '🐚', '🌻'];
+              cell.innerHTML = `<span class="text-xl opacity-40">${decorIcons[Math.floor(Math.random() * decorIcons.length)]}</span>`;
+            }
+          }
+          
+          board.appendChild(cell);
+        }
+      }
+    }
+
+    // Render character selection
+    function renderCharacterSelection() {
+      const grid = document.getElementById('character-grid');
+      grid.innerHTML = characters.map(char => `
+        <button onclick="toggleCharacter('${char.id}')" 
+          id="char-btn-${char.id}"
+          class="char-btn p-2 rounded-xl transition-all border-2 border-transparent hover:border-cyan-400 flex flex-col items-center"
+          style="background: ${char.color}20;">
+          <span class="text-2xl">${char.emoji}</span>
+          <span class="text-[8px] font-bold text-gray-700 mt-1">${char.name.split(' ')[0]}</span>
+        </button>
+      `).join('');
+    }
+
+    // Set player count
+    function setPlayerCount(count) {
+      gameState.selectedPlayerCount = count;
+      gameState.selectedCharacters = [];
+      
+      document.querySelectorAll('.player-count-btn').forEach(btn => {
+        btn.classList.remove('bg-cyan-500', 'text-white');
+        btn.classList.add('bg-gray-100');
+      });
+      
+      document.querySelector(`[data-count="${count}"]`).classList.add('bg-cyan-500', 'text-white');
+      document.querySelector(`[data-count="${count}"]`).classList.remove('bg-gray-100');
+      
+      document.getElementById('character-selection').classList.remove('hidden');
+      renderCharacterSelection();
+      updateStartButton();
+    }
+
+    // Toggle character selection
+    function toggleCharacter(charId) {
+      const index = gameState.selectedCharacters.indexOf(charId);
+      
+      if (index > -1) {
+        gameState.selectedCharacters.splice(index, 1);
+      } else if (gameState.selectedCharacters.length < gameState.selectedPlayerCount) {
+        gameState.selectedCharacters.push(charId);
+      }
+      
+      // Update visual
+      document.querySelectorAll('.char-btn').forEach(btn => {
+        btn.classList.remove('ring-4', 'ring-yellow-400', 'scale-110');
+      });
+      
+      gameState.selectedCharacters.forEach((id, idx) => {
+        const btn = document.getElementById(`char-btn-${id}`);
+        btn.classList.add('ring-4', 'ring-yellow-400', 'scale-110');
+      });
+      
+      updateStartButton();
+    }
+
+    // Update start button state
+    function updateStartButton() {
+      const btn = document.getElementById('start-game-btn');
+      btn.disabled = gameState.selectedCharacters.length !== gameState.selectedPlayerCount;
+    }
+
+    // Start game
+    function startGame() {
+      gameState.players = gameState.selectedCharacters.map(charId => {
+        const char = characters.find(c => c.id === charId);
+        return {
+          ...char,
+          position: 0,
+          points: 50,
+          skipTurns: 0
+        };
+      });
+      
+      gameState.currentPlayerIndex = 0;
+      gameState.gameStarted = true;
+      
+      document.getElementById('start-screen').classList.add('hidden');
+      renderPlayersStatus();
+      updateCurrentPlayerDisplay();
+      renderTokens();
+    }
+
+    // Render players status bar
+    function renderPlayersStatus() {
+      const container = document.getElementById('players-status');
+      container.innerHTML = gameState.players.map((player, idx) => `
+        <div id="player-status-${idx}" 
+          class="flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${idx === gameState.currentPlayerIndex ? 'bg-white/30 ring-2 ring-yellow-400' : 'bg-white/10'}">
+          <div class="character-token" style="background: ${player.color};">
+            ${player.emoji}
+          </div>
+          <div>
+            <p class="text-white text-xs font-bold">${player.name.split(' ')[0]}</p>
+            <p class="text-yellow-300 text-xs font-bold">⭐ ${player.points} poin</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Update current player display
+    function updateCurrentPlayerDisplay() {
+      const player = gameState.players[gameState.currentPlayerIndex];
+      const container = document.getElementById('current-player-display');
+      
+      container.innerHTML = `
+        <div class="character-token pulse-glow" style="background: ${player.color};">
+          ${player.emoji}
+        </div>
+        <div>
+          <p class="text-white font-bold text-sm">${player.name}</p>
+          <p class="text-yellow-300 text-xs">⭐ ${player.points} poin</p>
+        </div>
+      `;
+    }
+
+    // Render tokens on board
+    function renderTokens() {
+      // Clear all token containers
+      for (let i = 0; i < boardTiles.length; i++) {
+        const container = document.getElementById(`tokens-${i}`);
+        if (container) container.innerHTML = '';
+      }
+      
+      // Place tokens
+      gameState.players.forEach((player, idx) => {
+        const container = document.getElementById(`tokens-${player.position}`);
+        if (container) {
+          const token = document.createElement('div');
+          token.className = 'character-token';
+          token.style.background = player.color;
+          token.style.width = '24px';
+          token.style.height = '24px';
+          token.style.fontSize = '0.8rem';
+          token.innerHTML = player.emoji;
+          token.id = `token-${idx}`;
+          container.appendChild(token);
+        }
+      });
+    }
+
+    // Roll dice
+    async function rollDice() {
+      if (gameState.isRolling || !gameState.gameStarted) return;
+      
+      const player = gameState.players[gameState.currentPlayerIndex];
+      
+      // Check if player needs to skip turn
+      if (player.skipTurns > 0) {
+        player.skipTurns--;
+        document.getElementById('dice-instruction').textContent = `${player.name.split(' ')[0]} melewati giliran!`;
+        setTimeout(() => nextTurn(), 1500);
+        return;
+      }
+      
+      gameState.isRolling = true;
+      const diceBtn = document.getElementById('roll-dice-btn');
+      
+      // Roll animation
+      diceBtn.classList.add('dice-rolling');
+      
+      // Generate random number
+      const roll = Math.floor(Math.random() * 6) + 1;
+      
+      // Show rolling numbers
+      let count = 0;
+      const rollInterval = setInterval(() => {
+        diceBtn.textContent = Math.floor(Math.random() * 6) + 1;
+        count++;
+        if (count > 10) {
+          clearInterval(rollInterval);
+          diceBtn.textContent = roll;
+          diceBtn.classList.remove('dice-rolling');
+        }
+      }, 80);
+      
+      await new Promise(r => setTimeout(r, 1000));
+      
+      // Move player
+      await movePlayer(roll);
+    }
+
+    // Move player
+    async function movePlayer(steps) {
+      const player = gameState.players[gameState.currentPlayerIndex];
+      const oldPosition = player.position;
+      
+      // Animate movement
+      for (let i = 0; i < steps; i++) {
+        player.position = (player.position + 1) % boardTiles.length;
+        
+        // Check if passed start
+        if (player.position === 0 && i < steps - 1) {
+          player.points += 20;
+          document.getElementById('dice-instruction').textContent = 'Melewati Start! +20 poin!';
+        }
+        
+        renderTokens();
+        renderPlayersStatus();
+        
+        // Play step sound effect (visual feedback)
+        const token = document.getElementById(`token-${gameState.currentPlayerIndex}`);
+        if (token) {
+          token.classList.add('walking');
+          await new Promise(r => setTimeout(r, 300));
+          token.classList.remove('walking');
+        }
+      }
+      
+      // Handle landing tile
+      await handleTileLanding();
+    }
+
+    // Handle tile landing
+    async function handleTileLanding() {
+      const player = gameState.players[gameState.currentPlayerIndex];
+      const tile = boardTiles[player.position];
+      
+      switch (tile.type) {
+        case 'start':
+          player.points += 10;
+          showModal('🎉', 'Dermaga Pusat!', 'Selamat datang! Dapat bonus +10 poin!', null, 'positive');
+          break;
+          
+        case 'maritime':
+        case 'agrarian':
+        case 'question':
+          showQuestionModal(tile);
+          return; // Don't end turn yet
+          
+        case 'challenge':
+          showChallengeModal();
+          return;
+          
+        case 'chance':
+          showChanceModal();
+          return;
+      }
+      
+      await new Promise(r => setTimeout(r, 1500));
+      checkWinner() || nextTurn();
+    }
+
+    // Show question modal
+    function showQuestionModal(tile) {
+      const question = questions[Math.floor(Math.random() * questions.length)];
+      
+      const modal = document.getElementById('question-modal');
+      document.getElementById('modal-icon').textContent = tile.icon;
+      document.getElementById('modal-title').textContent = tile.type === 'question' ? 'Pertanyaan Nusantara' : tile.name;
+      document.getElementById('modal-question').textContent = question.q;
+      
+      const optionsContainer = document.getElementById('modal-options');
+      optionsContainer.innerHTML = question.options.map((opt, idx) => `
+        <button onclick="answerQuestion(${idx}, ${question.answer})" 
+          class="w-full p-4 rounded-xl text-left font-bold transition-all hover:scale-102 border-2 border-gray-200 hover:border-cyan-400 hover:bg-cyan-50">
+          ${String.fromCharCode(65 + idx)}. ${opt}
+        </button>
+      `).join('');
+      
+      document.getElementById('modal-result').classList.add('hidden');
+      document.getElementById('modal-continue').classList.add('hidden');
+      
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    // Answer question
+    function answerQuestion(selected, correct) {
+      const player = gameState.players[gameState.currentPlayerIndex];
+      const isCorrect = selected === correct;
+      
+      const resultDiv = document.getElementById('modal-result');
+      const resultText = document.getElementById('result-text');
+      const resultPoints = document.getElementById('result-points');
+      
+      // Disable all option buttons
+      document.querySelectorAll('#modal-options button').forEach((btn, idx) => {
+        btn.disabled = true;
+        if (idx === correct) {
+          btn.classList.add('bg-green-100', 'border-green-500');
+        } else if (idx === selected && !isCorrect) {
+          btn.classList.add('bg-red-100', 'border-red-500');
+        }
+      });
+      
+      if (isCorrect) {
+        player.points += 15;
+        resultDiv.className = 'mt-4 p-4 rounded-2xl text-center bg-green-100';
+        resultText.textContent = '✅ Benar! Hebat!';
+        resultPoints.textContent = '+15 Poin Hasil Alam';
+      } else {
+        player.points = Math.max(0, player.points - 5);
+        resultDiv.className = 'mt-4 p-4 rounded-2xl text-center bg-red-100';
+        resultText.textContent = '❌ Kurang tepat!';
+        resultPoints.textContent = '-5 Poin Hasil Alam';
+      }
+      
+      resultDiv.classList.remove('hidden');
+      document.getElementById('modal-continue').classList.remove('hidden');
+      
+      renderPlayersStatus();
+    }
+
+    // Show challenge modal
+    function showChallengeModal() {
+      const challenge = challenges[Math.floor(Math.random() * challenges.length)];
+      const player = gameState.players[gameState.currentPlayerIndex];
+      
+      let effectText = '';
+      
+      if (challenge.effect === 'points') {
+        player.points = Math.max(0, player.points + challenge.value);
+        effectText = `${challenge.value} poin`;
+      } else if (challenge.effect === 'move') {
+        player.position = Math.max(0, (player.position + challenge.value + boardTiles.length) % boardTiles.length);
+        effectText = `${Math.abs(challenge.value)} langkah`;
+        renderTokens();
+      } else if (challenge.effect === 'skip') {
+        player.skipTurns = challenge.value;
+        effectText = 'Lewati 1 giliran';
+      }
+      
+      showModal(challenge.icon, 'Kartu Tantangan!', challenge.text, effectText, 'negative');
+      renderPlayersStatus();
+    }
+
+    // Show chance modal
+    function showChanceModal() {
+      const chance = chances[Math.floor(Math.random() * chances.length)];
+      const player = gameState.players[gameState.currentPlayerIndex];
+      
+      let effectText = '';
+      
+      if (chance.effect === 'points') {
+        player.points += chance.value;
+        effectText = `+${chance.value} poin`;
+      } else if (chance.effect === 'move') {
+        player.position = (player.position + chance.value) % boardTiles.length;
+        effectText = `Maju ${chance.value} langkah`;
+        renderTokens();
+      }
+      
+      showModal(chance.icon, 'Kartu Kesempatan!', chance.text, effectText, 'positive');
+      renderPlayersStatus();
+    }
+
+    // Show generic modal
+    function showModal(icon, title, text, effect, type) {
+      const modal = document.getElementById('question-modal');
+      document.getElementById('modal-icon').textContent = icon;
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('modal-question').textContent = text;
+      document.getElementById('modal-options').innerHTML = '';
+      
+      if (effect) {
+        const resultDiv = document.getElementById('modal-result');
+        resultDiv.className = `mt-4 p-4 rounded-2xl text-center ${type === 'positive' ? 'bg-green-100' : 'bg-red-100'}`;
+        document.getElementById('result-text').textContent = type === 'positive' ? '🎊 Beruntung!' : '😢 Sayang sekali!';
+        document.getElementById('result-points').textContent = effect;
+        resultDiv.classList.remove('hidden');
+      } else {
+        document.getElementById('modal-result').classList.add('hidden');
+      }
+      
+      document.getElementById('modal-continue').classList.remove('hidden');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    // Close modal
+    function closeModal() {
+      document.getElementById('question-modal').classList.add('hidden');
+      document.getElementById('question-modal').classList.remove('flex');
+      gameState.isRolling = false;
+      
+      checkWinner() || nextTurn();
+    }
+
+    // Check for winner
+    function checkWinner() {
+      const winner = gameState.players.find(p => p.points >= gameState.winningScore);
+      
+      if (winner) {
+        document.getElementById('winner-name').textContent = `${winner.emoji} ${winner.name} Menang!`;
+        document.getElementById('winner-score').textContent = `Dengan ${winner.points} Poin Hasil Alam`;
+        document.getElementById('winner-modal').classList.remove('hidden');
+        document.getElementById('winner-modal').classList.add('flex');
+        return true;
+      }
+      return false;
+    }
+
+    // Next turn
+    function nextTurn() {
+      gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+      gameState.isRolling = false;
+      
+      renderPlayersStatus();
+      updateCurrentPlayerDisplay();
+      
+      const nextPlayer = gameState.players[gameState.currentPlayerIndex];
+      document.getElementById('dice-instruction').textContent = `Giliran ${nextPlayer.name.split(' ')[0]}!`;
+    }
+
+    // Restart game
+    function restartGame() {
+      document.getElementById('winner-modal').classList.add('hidden');
+      document.getElementById('winner-modal').classList.remove('flex');
+      document.getElementById('start-screen').classList.remove('hidden');
+      
+      gameState = {
+        players: [],
+        currentPlayerIndex: 0,
+        isRolling: false,
+        selectedPlayerCount: 0,
+        selectedCharacters: [],
+        gameStarted: false,
+        winningScore: 200
+      };
+      
+      document.querySelectorAll('.player-count-btn').forEach(btn => {
+        btn.classList.remove('bg-cyan-500', 'text-white');
+        btn.classList.add('bg-gray-100');
+      });
+      
+      document.getElementById('character-selection').classList.add('hidden');
+      document.getElementById('roll-dice-btn').textContent = '?';
+      document.getElementById('dice-instruction').textContent = 'Klik dadu untuk memulai!';
+    }
+
+    // Element SDK Integration
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig: defaultConfig,
+        onConfigChange: async (config) => {
+          // Update game title
+          const titleEl = document.getElementById('game-title');
+          if (titleEl) {
+            titleEl.textContent = `🌊 ${config.game_title || defaultConfig.game_title} 🌾`;
+          }
+          
+          // Update start tile name
+          boardTiles[0].name = config.start_text || defaultConfig.start_text;
+          
+          // Apply font
+          const fontFamily = config.font_family || defaultConfig.font_family;
+          document.body.style.fontFamily = `${fontFamily}, Nunito, sans-serif`;
+          
+          // Reinit board if game hasn't started
+          if (!gameState.gameStarted) {
+            initBoard();
+          }
+        },
+        mapToCapabilities: (config) => ({
+          recolorables: [
+            {
+              get: () => config.background_color || defaultConfig.background_color,
+              set: (value) => window.elementSdk.setConfig({ background_color: value })
+            },
+            {
+              get: () => config.accent_color || defaultConfig.accent_color,
+              set: (value) => window.elementSdk.setConfig({ accent_color: value })
+            },
+            {
+              get: () => config.text_color || defaultConfig.text_color,
+              set: (value) => window.elementSdk.setConfig({ text_color: value })
+            },
+            {
+              get: () => config.maritime_color || defaultConfig.maritime_color,
+              set: (value) => window.elementSdk.setConfig({ maritime_color: value })
+            },
+            {
+              get: () => config.agrarian_color || defaultConfig.agrarian_color,
+              set: (value) => window.elementSdk.setConfig({ agrarian_color: value })
+            }
+          ],
+          borderables: [],
+          fontEditable: {
+            get: () => config.font_family || defaultConfig.font_family,
+            set: (value) => window.elementSdk.setConfig({ font_family: value })
+          },
+          fontSizeable: undefined
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ["game_title", config.game_title || defaultConfig.game_title],
+          ["start_text", config.start_text || defaultConfig.start_text]
+        ])
+      });
+    }
+
+    // Initialize
+    initBoard();
+    renderCharacterSelection();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9da6a80576a2f8ca',t:'MTc3MzE5MTE4NC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
